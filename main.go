@@ -9,8 +9,16 @@ import (
 )
 
 const (
-	fileName = "kinase_human_domain.fasta"
-	refTag   = ">SRC_Hs_Src_SrcA"
+	defaultFileName = "kinase_human_domain.fasta"
+
+	defaultRefTag = ">SRC_Hs_Src_SrcA"
+
+	paramFile = "param.txt"
+)
+
+var (
+	fileName string = ""
+	refTag   string = ""
 )
 
 func readFile() map[string]string {
@@ -20,6 +28,7 @@ func readFile() map[string]string {
 		fmt.Println("read file err:", err)
 		return nil
 	}
+	defer f.Close()
 	buf := bufio.NewReader(f)
 	var key, value string
 	for {
@@ -92,10 +101,35 @@ func countAlphabet(data map[string]string, refAlphabet rune) {
 	}
 }
 
+func readParamFromFile() {
+	f, err := os.Open(paramFile)
+	if err != nil {
+		fmt.Println("no param file,use default:", err)
+		fileName = defaultFileName
+		refTag = defaultRefTag
+		return
+	}
+	defer f.Close()
+	buf := bufio.NewReader(f)
+	line, err := buf.ReadString('\n')
+	if err != nil {
+		fmt.Println("read param err ", err)
+	}
+	fileName = strings.TrimSpace(line)
+
+	line, err = buf.ReadString('\n')
+	if err != nil {
+		fmt.Println("read param ", err)
+	}
+	refTag = ">" + strings.TrimSpace(line)
+}
+
 func main() {
-	// 1. read file,create map [key=tag] value=lines info
+	// 1.read param from file
+	readParamFromFile()
+	// 2. read file,create map [key=tag] value=lines info
 	data := readFile()
-	// 2. count every alphabet and write file
+	// 3. count every alphabet and write file
 	for a := 'A'; a <= 'Z'; a++ {
 		countAlphabet(data, a)
 	}
